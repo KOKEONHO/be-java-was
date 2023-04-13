@@ -36,30 +36,30 @@ public class RequestHandler implements Runnable {
             BufferedReader br = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
             StringBuilder requestHeaderBuilder = new StringBuilder();       // Request Header
             String requestLine = br.readLine();     // Request Line
-            logger.info(">> requestLine: {}", requestLine);
+            logger.debug(">> requestLine: {}", requestLine);
             String line = br.readLine();
             while (!line.equals("")) {
                 requestHeaderBuilder.append(line).append("\n");
                 line = br.readLine();
             }
             Map<String, String> headerMap = requestParser.parseRequestHeader(requestHeaderBuilder.toString());
-            logger.info(">> headerMap: {}", headerMap);
+            logger.debug(">> headerMap: {}", headerMap);
 
             String[] splitRequestLine = requestParser.parseRequestLine(requestLine);
             Request request = createNewRequest(splitRequestLine);
 
-            logger.info(">> Request Handler -> request method: {}, request uri: {}, request version: {}", request.getMethod(), request.getUri(), request.getVersion());
+            logger.debug(">> Request Handler -> request method: {}, request uri: {}, request version: {}", request.getMethod(), request.getUri(), request.getVersion());
 
             if (request.getUri().startsWith(USER_CREATE)) {
                 request.setUri(userController.saveUser(request.getUri()));
-                logger.info(">> Request Handler -> New User: {}", Database.findUserById("rhrjsgh97"));
+                logger.debug(">> Request Handler -> New User: {}", Database.findUserById("rhrjsgh97"));
             }
 
             // TODO 사용자 요청에 대한 처리는 이 곳에 구현하면 된다.
             DataOutputStream dos = new DataOutputStream(out);
             String accept = headerMap.get("Accept").split(",")[0];
-            logger.info(">> RequestHandler -> accept: {}", accept);
-            logger.info(">> RequestHandler -> request.getUri(): {}", request.getUri());
+            logger.debug(">> RequestHandler -> accept: {}", accept);
+            logger.debug(">> RequestHandler -> request.getUri(): {}", request.getUri());
             byte[] body = null;
             if (accept.endsWith("*") || accept.endsWith("css")) {
                 body = Files.readAllBytes(new File("src/main/resources/static" + request.getUri()).toPath());
