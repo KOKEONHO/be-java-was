@@ -22,7 +22,7 @@ public class UserController {
 
     public String saveUser(String uri) {
         String queryString = getQueryString(uri);
-        logger.info(">> UserController -> queryString: {}", queryString);
+        logger.debug(">> UserController -> queryString: {}", queryString);
         userSignUpService.userSignUp(queryString);
         return "/index.html";
     }
