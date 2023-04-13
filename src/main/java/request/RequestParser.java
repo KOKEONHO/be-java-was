@@ -14,7 +14,7 @@ public class RequestParser {
 
     public String[] parseRequestLine(String line) {
         String[] splitRequestLine = line.split(" ");
-        logger.info(">> RequestParser -> splitRequestLine: {}", Arrays.toString(splitRequestLine));
+        logger.debug(">> RequestParser -> splitRequestLine: {}", Arrays.toString(splitRequestLine));
         // 만약 localhost:8080만 입력됐을 시 -> WELCOME PAGE
         if (splitRequestLine[1].equals("/")) {
             splitRequestLine[1] = WELCOME_PAGE;
@@ -23,9 +23,9 @@ public class RequestParser {
     }
 
     public Map<String, String> parseRequestHeader(String requestHeader) {
-        logger.info(">> RequestParser -> String requestHeader: {}", requestHeader);
+        logger.debug(">> RequestParser -> String requestHeader: {}", requestHeader);
         String[] splitRequestHeader = requestHeader.split("\n");
-        logger.info("RequestParser -> splitRequestHeader: {}", Arrays.toString(splitRequestHeader));
+        logger.debug("RequestParser -> splitRequestHeader: {}", Arrays.toString(splitRequestHeader));
         Map<String, String> requestHeaderMap = new HashMap<>();
         for (String string : splitRequestHeader) {
             String[] headerKeyValue = string.split(":", 2);
