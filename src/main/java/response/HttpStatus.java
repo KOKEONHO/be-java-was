@@ -1,3 +1,5 @@
+package response;
+
 public enum HttpStatus {
 
     OK(200, "200 OK"),
