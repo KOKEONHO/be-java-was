@@ -3,12 +3,9 @@ package webserver;
 import java.io.*;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.util.Map;
 
 import config.AppConfig;
 import controller.UserController;
-import db.Database;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import request.Request;
@@ -32,54 +29,40 @@ public class RequestHandler implements Runnable {
         logger.debug("New Client Connect! Connected IP : {}, Port : {}", connection.getInetAddress(),
                 connection.getPort());
 
-        try (InputStream in = connection.getInputStream(); OutputStream out = connection.getOutputStream()) {
-            BufferedReader br = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
-            StringBuilder requestHeaderBuilder = new StringBuilder();       // Request Header
-            String requestLine = br.readLine();     // Request Line
-            logger.debug(">> requestLine: {}", requestLine);
-            String line = br.readLine();
-            while (!line.equals("")) {
-                requestHeaderBuilder.append(line).append("\n");
-                line = br.readLine();
-            }
-            Map<String, String> headerMap = requestParser.parseRequestHeader(requestHeaderBuilder.toString());
-            logger.debug(">> headerMap: {}", headerMap);
-
-            String[] splitRequestLine = requestParser.parseRequestLine(requestLine);
-            Request request = createNewRequest(splitRequestLine);
-
-            logger.debug(">> Request Handler -> request method: {}, request uri: {}, request version: {}", request.getMethod(), request.getUri(), request.getVersion());
-
-            if (request.getUri().startsWith(USER_CREATE)) {
-                request.setUri(userController.saveUser(request.getUri()));
-                logger.debug(">> Request Handler -> New User: {}", Database.findUserById("rhrjsgh97"));
-            }
-
-            // TODO 사용자 요청에 대한 처리는 이 곳에 구현하면 된다.
-            DataOutputStream dos = new DataOutputStream(out);
-            String accept = headerMap.get("Accept").split(",")[0];
-            logger.debug(">> RequestHandler -> accept: {}", accept);
-            logger.debug(">> RequestHandler -> request.getUri(): {}", request.getUri());
-            byte[] body = null;
-            if (accept.endsWith("*") || accept.endsWith("css")) {
-                body = Files.readAllBytes(new File("src/main/resources/static" + request.getUri()).toPath());
-            } else {
-                body = Files.readAllBytes(new File("src/main/resources/templates" + request.getUri()).toPath());
-            }
-            sendResponse(dos, body, accept);
+        try (InputStream inputStream = connection.getInputStream(); OutputStream outputStream = connection.getOutputStream()) {
+            Request request = createRequest(inputStream, requestParser);
+            Response response = createResponse(request);
+            doResponse(outputStream, response);
+//            if (request.getUri().startsWith(USER_CREATE)) {
+//                request.setUri(userController.saveUser(request.getUri()));
+//                logger.debug(">> Request Handler -> New User: {}", Database.findUserById("rhrjsgh97"));
+//            }
         } catch (IOException e) {
             logger.error(e.getMessage());
         }
     }
 
-    private void sendResponse(DataOutputStream dataOutputStream, byte[] body, String accept) {
-        Response response = new Response(dataOutputStream, body.length, accept);
-        response.send200Header();
-        response.sendBody(body);
+    private Request createRequest(InputStream inputStream, RequestParser requestParser) throws IOException {
+        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
+        Request request = new Request(bufferedReader, requestParser);
+        return request;
     }
 
-    private Request createNewRequest(String[] splitRequestLine) {
-        return new Request(splitRequestLine[0], splitRequestLine[1], splitRequestLine[2]);
+    private Response createResponse(Request request) throws IOException {
+        Response response = new Response(request.getHttpMethod(), request.getRequestTarget(), request.getHttpVersion(), request.getRequestHeaderMap());
+        return response;
+    }
+
+    private void doResponse(OutputStream outputStream, Response response) {
+        DataOutputStream dataOutputStream = new DataOutputStream(outputStream);
+        try {
+            dataOutputStream.writeBytes(response.getStartLine());
+            dataOutputStream.writeBytes(response.getHeader());
+            dataOutputStream.write(response.getBody(), 0, response.getBody().length);
+            dataOutputStream.flush();
+        } catch (IOException e) {
+            logger.error(e.getMessage());
+        }
     }
 
 }
