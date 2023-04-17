@@ -29,7 +29,6 @@ public class Response {
         setResponseBody();
         logger.debug(">> Response -> Response() -> requestTarget: {}", requestTarget);
         logger.debug(">> Response -> Response() -> accept: {}", accept);
-        logger.debug(">> Response -> Response() -> body: {}", body.toString());
         setResponseStartLine();
         setResponseHeader();
     }
